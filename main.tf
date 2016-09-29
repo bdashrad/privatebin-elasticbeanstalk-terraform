@@ -4,7 +4,7 @@ provider "aws" {
 }
 
 resource "aws_elastic_beanstalk_application" "privatebin" {
-  name = "privatebin"
+  name = "infra-privatebin"
   description = "minimalist, open source online pastebin"
 }
 
@@ -36,7 +36,7 @@ resource "aws_elastic_beanstalk_environment" "privatebin-prod" {
   setting = {
     namespace = "aws:elb:listener:443"
     name = "SSLCertificateId"
-    value = "arn:aws:acm:${var.aws_region}:${var.aws_account_id}:certificate/${var.ssl_cert_id}"
+    value = "arn:aws:iam::${var.aws_account_id}:server-certificate/${var.ssl_cert_id}"
   }
 
   setting = {
@@ -54,10 +54,16 @@ resource "aws_elastic_beanstalk_environment" "privatebin-prod" {
 }
 
 resource "aws_route53_record" "privatebin" {
-  zone_id = "${var.zone_id}"
+  zone_id = "${var.root_zone_id}"
   name = "bin"
+  # type = "A"
+  # alias {
+  #   name = "bin"
+  #   zone_id = "${lookup(var.aws_eb_zone_id, var.aws_region)}"
+  #   evaluate_target_health = true
+  # }
   type = "CNAME"
   ttl = "60"
-  records = ["aws_elastic_beanstalk_environment.privatebin-prod.cname"]
+  records = ["${aws_elastic_beanstalk_environment.privatebin-prod.cname}"]
 }
 
