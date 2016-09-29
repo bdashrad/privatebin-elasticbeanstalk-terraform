@@ -27,6 +27,11 @@ variable "aws_region" {
   default = "us-east-1"
 }
 
+variable "ec2_key_name" {
+  type = "string"
+  description = "name of existing EC2 key pair"
+}
+
 variable "root_zone_id" {
   type = "string"
   description = "zone identifier of the route53 zone where the dns record will live"

@@ -11,16 +11,43 @@ resource "aws_elastic_beanstalk_application" "privatebin" {
 resource "aws_elastic_beanstalk_environment" "privatebin-prod" {
   name = "prod"
   application = "${aws_elastic_beanstalk_application.privatebin.name}"
-  solution_stack_name = "64bit Amazon Linux 2016.03 v2.1.6 running PHP 7.0"
+  solution_stack_name = "64bit Amazon Linux 2016.03 v2.1.7 running PHP 7.0"
 
   # Instance type
   setting = {
     namespace = "aws:autoscaling:launchconfiguration"
     name = "InstanceType"
-    value = "m3.medium"
+    value = "m1.small"
   }
 
-  # Load Balancing
+  # set a key to access the instance
+  setting = {
+    namespace = "aws:autoscaling:launchconfiguration"
+    name = "EC2KeyName"
+    value = "${var.ec2_key_name}"
+  }
+
+  # make it load balanced so we get an ELB
+  setting = {
+    namespace = "aws:elasticbeanstalk:environment"
+    name = "EnvironmentType"
+    value = "LoadBalanced"
+  }
+
+  # we don't need to scale
+  setting = {
+    namespace = "aws:autoscaling:asg"
+    name = "MinSize"
+    value = "1"
+  }
+
+  setting = {
+    namespace = "aws:autoscaling:asg"
+    name = "MaxSize"
+    value = "1"
+  }
+
+  # Load Balancer settings
   setting = {
     namespace = "aws:elb:listener:443"
     name = "ListenerProtocol"
@@ -45,25 +72,15 @@ resource "aws_elastic_beanstalk_environment" "privatebin-prod" {
     value = "true"
   }
 
-  setting = {
-    namespace = "aws:elb:policies"
-    name = "ConnectionDrainingEnabled"
-    value = "true"
-  }
-
 }
 
 resource "aws_route53_record" "privatebin" {
   zone_id = "${var.root_zone_id}"
   name = "bin"
-  # type = "A"
-  # alias {
-  #   name = "bin"
-  #   zone_id = "${lookup(var.aws_eb_zone_id, var.aws_region)}"
-  #   evaluate_target_health = true
-  # }
-  type = "CNAME"
-  ttl = "60"
-  records = ["${aws_elastic_beanstalk_environment.privatebin-prod.cname}"]
+  type = "A"
+  alias {
+    name = "${aws_elastic_beanstalk_environment.privatebin-prod.cname}"
+    zone_id = "${lookup(var.aws_eb_zone_id, var.aws_region)}"
+    evaluate_target_health = true
+  }
 }
-
