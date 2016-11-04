@@ -11,7 +11,7 @@ resource "aws_elastic_beanstalk_application" "privatebin" {
 resource "aws_elastic_beanstalk_environment" "privatebin-prod" {
   name = "prod"
   application = "${aws_elastic_beanstalk_application.privatebin.name}"
-  solution_stack_name = "64bit Amazon Linux 2016.03 v2.1.7 running PHP 7.0"
+  solution_stack_name = "64bit Amazon Linux 2016.09 v2.2.0 running PHP 7.0"
 
   # Instance type
   setting = {
@@ -32,6 +32,18 @@ resource "aws_elastic_beanstalk_environment" "privatebin-prod" {
     namespace = "aws:elasticbeanstalk:environment"
     name = "EnvironmentType"
     value = "LoadBalanced"
+  }
+
+  setting = {
+    namespace = "aws:elasticbeanstalk:healthreporting:system"
+    name = "SystemType"
+    value = "enhanced"
+  }
+
+  setting = {
+    namespace = "aws:elasticbeanstalk:healthreporting:system"
+    name = "ConfigDocument"
+    value = "${file("${path.module}/policies/config-ebhealthreporting.json")}"
   }
 
   # we don't need to scale
