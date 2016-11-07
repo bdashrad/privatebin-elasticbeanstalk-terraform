@@ -57,17 +57,24 @@ resource "aws_elastic_beanstalk_environment" "privatebin-prod" {
     value = "LoadBalanced"
   }
 
+  # Health
   setting = {
-    namespace = "aws:elasticbeanstalk:healthreporting:system"
-    name = "SystemType"
-    value = "enhanced"
+    namespace = "aws:elasticbeanstalk:application"
+    name = "Application Healthcheck URL"
+    value = "/"
   }
 
-  setting = {
-    namespace = "aws:elasticbeanstalk:healthreporting:system"
-    name = "ConfigDocument"
-    value = "${file("${path.module}/policies/config-ebhealthreporting.json")}"
-  }
+  # setting = {
+  #   namespace = "aws:elasticbeanstalk:healthreporting:system"
+  #   name = "SystemType"
+  #   value = "enhanced"
+  # }
+
+  # setting = {
+  #   namespace = "aws:elasticbeanstalk:healthreporting:system"
+  #   name = "ConfigDocument"
+  #   value = "${file("${path.cwd}/policies/config-ebhealthreporting.json")}"
+  # }
 
   # we don't need to scale
   setting = {
