@@ -3,6 +3,22 @@ provider "aws" {
   region = "${var.aws_region}"
 }
 
+resource "aws_iam_role" "privatebin" {
+  name = "infra-privatebin"
+  assume_role_policy = "${file("${path.cwd}/policies/role-ec2.json")}"
+}
+
+resource "aws_iam_role_policy" "privatebin" {
+  name = "infra-privatebin"
+  role = "${aws_iam_role.privatebin.id}"
+  policy = "${file("${path.cwd}/policies/policy-elasticbeanstalk-web.json")}"
+}
+
+resource "aws_iam_instance_profile" "privatebin" {
+  name = "infra-privatebin"
+  roles = ["${aws_iam_role.privatebin.name}"]
+}
+
 resource "aws_elastic_beanstalk_application" "privatebin" {
   name = "infra-privatebin"
   description = "minimalist, open source online pastebin"
@@ -25,6 +41,13 @@ resource "aws_elastic_beanstalk_environment" "privatebin-prod" {
     namespace = "aws:autoscaling:launchconfiguration"
     name = "EC2KeyName"
     value = "${var.ec2_key_name}"
+  }
+
+  # use the IAM instance profile we define above to speed up deployments
+  setting = {
+    namespace = "aws:autoscaling:launchconfiguration"
+    name = "IamInstanceProfile"
+    value = "${aws_iam_instance_profile.privatebin.name}"
   }
 
   # make it load balanced so we get an ELB
